@@ -1,5 +1,4 @@
 import bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
 
 export async function hashPassword(password: string) {
   return await bcrypt.hash(password, 10);
