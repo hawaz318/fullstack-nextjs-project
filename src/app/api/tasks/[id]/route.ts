@@ -3,17 +3,31 @@ import { verifyToken } from '@/utils/generateToken';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+// Zod schema for task validation
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   status: z.enum(['pending', 'completed']).optional(),
-  categoryId: z.string().optional()
+  categoryId: z.string().optional(),
 });
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+// ✅ Declare the context type separately
+type Context = {
+  params: {
+    id: string;
+  };
+};
+
+// ✅ PUT route
+export async function PUT(
+  req: NextRequest,
+  { params }: Context
+) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const decoded = verifyToken(token);
 
@@ -46,10 +60,16 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+// ✅ DELETE route
+export async function DELETE(
+  req: NextRequest,
+  { params }: Context
+) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const decoded = verifyToken(token);
 
