@@ -1,10 +1,8 @@
-// app/api/tasks/[id]/route.ts
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/utils/generateToken';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-// Zod schema
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
@@ -12,7 +10,7 @@ const taskSchema = z.object({
   categoryId: z.string().optional()
 });
 
-// PUT /api/tasks/[id]
+
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
@@ -49,7 +47,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-// DELETE /api/tasks/[id]
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
