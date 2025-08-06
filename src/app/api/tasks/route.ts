@@ -2,20 +2,23 @@ import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/utils/generateToken';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client'; // ✅ Add Prisma import
 
+// Validation schema for tasks
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
   status: z.enum(['pending', 'completed']).optional(),
-  categoryId: z.string().optional()
+  categoryId: z.string().optional(),
 });
 
-
+// GET handler: Fetch tasks
 export async function GET(req: NextRequest) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const decoded = verifyToken(token);
     const userId = decoded.userId;
@@ -24,16 +27,12 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get('category');
     const status = searchParams.get('status');
 
-    
-const where: Prisma.TaskWhereInput = { userId };
-
-    if (category) {
-      where.category = { name: category };
-    }
-
-    if (status) {
-      where.status = status;
-    }
+    // ✅ Build Prisma where filter
+    const where: Prisma.TaskWhereInput = {
+      userId,
+      ...(category ? { category: { name: category } } : {}),
+      ...(status ? { status } : {}),
+    };
 
     const tasks = await prisma.task.findMany({
       where,
@@ -47,11 +46,13 @@ const where: Prisma.TaskWhereInput = { userId };
   }
 }
 
-
+// POST handler: Create a new task
 export async function POST(req: NextRequest) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
-    if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     const decoded = verifyToken(token);
     const userId = decoded.userId;
@@ -69,13 +70,13 @@ export async function POST(req: NextRequest) {
       data: {
         title,
         description,
-        categoryId,
         status: status || 'pending',
+        categoryId,
         userId,
       },
     });
 
-    return NextResponse.json(task);
+    return NextResponse.json(task, { status: 201 });
   } catch (err) {
     console.error('POST /api/tasks error:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(newCategory);
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
   }
 }

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     const token = generateToken(user.id);
 
     return NextResponse.json({ token, user: { id: user.id, name: user.name, email: user.email } });
-  } catch (error) {
+  } catch (_error) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
