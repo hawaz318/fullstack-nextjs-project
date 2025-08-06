@@ -2,14 +2,32 @@
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/utils/generateToken';
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 
+// Zod schema
+const taskSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  status: z.enum(['pending', 'completed']).optional(),
+  categoryId: z.string().optional()
+});
+
+// PUT /api/tasks/[id]
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
     if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const decoded = verifyToken(token);
-    const { title, description, status, categoryId } = await req.json();
+
+    const body = await req.json();
+    const result = taskSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error.flatten().fieldErrors }, { status: 400 });
+    }
+
+    const { title, description, status, categoryId } = result.data;
 
     const updated = await prisma.task.update({
       where: {
@@ -26,10 +44,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
     return NextResponse.json(updated);
   } catch (err) {
+    console.error('PUT error:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
 
+// DELETE /api/tasks/[id]
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
@@ -46,6 +66,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
 
     return NextResponse.json({ message: 'Task deleted' });
   } catch (err) {
+    console.error('DELETE error:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
