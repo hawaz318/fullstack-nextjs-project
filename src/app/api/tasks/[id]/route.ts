@@ -10,7 +10,6 @@ const taskSchema = z.object({
   categoryId: z.string().optional()
 });
 
-
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
