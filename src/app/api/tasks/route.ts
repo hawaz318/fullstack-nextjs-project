@@ -45,6 +45,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
+
 export async function POST(req: NextRequest) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
