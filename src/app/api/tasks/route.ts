@@ -12,7 +12,7 @@ const taskSchema = z.object({
   categoryId: z.string().optional()
 });
 
-// ✅ GET /api/tasks?category=work&status=completed
+
 export async function GET(req: NextRequest) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
