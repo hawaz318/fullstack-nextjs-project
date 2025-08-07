@@ -11,12 +11,11 @@ const taskSchema = z.object({
   categoryId: z.string().optional(),
 });
 
-
-export async function PUT(
- req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params;
+type Context = {
+  params: Record<string, string>;
+};
+export async function PUT(req: NextRequest, context: Context) {
+  const { id } = context.params;
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
     if (!token)
