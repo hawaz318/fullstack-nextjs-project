@@ -3,6 +3,12 @@ import { verifyToken } from '@/utils/generateToken';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+interface Context {
+  params: {
+    id: string;
+  };
+}
+
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
@@ -10,10 +16,7 @@ const taskSchema = z.object({
   categoryId: z.string().optional(),
 });
 
-export async function PUT(
-  req: NextRequest,
-  context: { params: { id: string } }
-) {
+export async function PUT(req: NextRequest, context: Context) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
     if (!token) {
@@ -55,10 +58,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  context: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, context: Context) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
     if (!token) {
