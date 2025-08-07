@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/utils/generateToken';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-
+import { Prisma } from '@prisma/client';
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -12,74 +12,71 @@ const taskSchema = z.object({
 });
 
 type Context = {
-  params: Record<string, string>;
+  params: { id: string };
 };
-export async function PUT(req: NextRequest, context: Context) {
-  const { id } = context.params;
+
+export async function PUT(req: NextRequest, { params }: Context) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
-    if (!token)
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const decoded = verifyToken(token);
-    const body = await req.json();
-
-    const result = taskSchema.safeParse(body);
-    if (!result.success) {
-      return NextResponse.json(
-        { error: result.error.flatten().fieldErrors },
-        { status: 400 }
-      );
     }
 
-    const existingTask = await prisma.task.findFirst({
-      where: { id, userId: decoded.userId },
-    });
+    const decoded = verifyToken(token);
+    const userId = decoded.userId;
 
-    if (!existingTask) {
-      return NextResponse.json({ error: 'Task not found or unauthorized' }, { status: 404 });
+    const body = await req.json();
+    const result = taskSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error.issues }, { status: 400 });
     }
 
     const { title, description, status, categoryId } = result.data;
 
-    const updated = await prisma.task.update({
-      where: { id },
-      data: { title, description, status, categoryId },
-    });
-
-    return NextResponse.json(updated);
-  } catch (err) {
-    console.error('PUT error:', err);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-  }
-}
-
-
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  const { id } = params;
-  try {
-    const token = req.headers.get('authorization')?.split(' ')[1];
-    if (!token)
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-    const decoded = verifyToken(token);
-
     const existingTask = await prisma.task.findFirst({
-      where: { id, userId: decoded.userId },
+      where: { id: params.id, userId },
     });
 
     if (!existingTask) {
       return NextResponse.json({ error: 'Task not found or unauthorized' }, { status: 404 });
     }
 
-    await prisma.task.delete({ where: { id } });
+    const updatedTask = await prisma.task.update({
+      where: { id: params.id },
+      data: { title, description, status, categoryId },
+    });
 
-    return NextResponse.json({ message: 'Task deleted' });
+    return NextResponse.json(updatedTask);
   } catch (err) {
-    console.error('DELETE error:', err);
+    console.error('PUT /api/tasks/[id] error:', err);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest, { params }: Context) {
+  try {
+    const token = req.headers.get('authorization')?.split(' ')[1];
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const decoded = verifyToken(token);
+    const userId = decoded.userId;
+
+    const existingTask = await prisma.task.findFirst({
+      where: { id: params.id, userId },
+    });
+
+    if (!existingTask) {
+      return NextResponse.json({ error: 'Task not found or unauthorized' }, { status: 404 });
+    }
+
+    await prisma.task.delete({ where: { id: params.id } });
+
+    return NextResponse.json({ message: 'Task deleted successfully' });
+  } catch (err) {
+    console.error('DELETE /api/tasks/[id] error:', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
