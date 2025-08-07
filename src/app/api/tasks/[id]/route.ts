@@ -10,9 +10,8 @@ const taskSchema = z.object({
   categoryId: z.string().optional(),
 });
 
-export async function PUT(  request: Request,
-  { params }: { params: { id: string } }) 
-   {
+export async function PUT(request: Request, context: { params: { id: string } }) {
+  const id = context.params.id;
  
   try {
     const token = request.headers.get('authorization')?.split(' ')[1];
@@ -31,7 +30,7 @@ export async function PUT(  request: Request,
     }
 
     const existingTask = await prisma.task.findFirst({
-      where: { id: params.id, userId: decoded.userId },
+      where: { id, userId: decoded.userId },
     });
     if (!existingTask) {
       return NextResponse.json(
@@ -43,7 +42,7 @@ export async function PUT(  request: Request,
     const { title, description, status, categoryId } = result.data;
 
     const updated = await prisma.task.update({
-      where: { id: params.id },
+      where: { id},
       data: { title, description, status, categoryId },
     });
 
