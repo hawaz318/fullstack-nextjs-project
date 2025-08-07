@@ -2,7 +2,6 @@ import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/utils/generateToken';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client';
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -11,11 +10,10 @@ const taskSchema = z.object({
   categoryId: z.string().optional(),
 });
 
-type Context = {
-  params: { id: string };
-};
-
-export async function PUT(req: NextRequest, { params }: Context) {
+export async function PUT(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
     if (!token) {
@@ -35,15 +33,18 @@ export async function PUT(req: NextRequest, { params }: Context) {
     const { title, description, status, categoryId } = result.data;
 
     const existingTask = await prisma.task.findFirst({
-      where: { id: params.id, userId },
+      where: { id: context.params.id, userId },
     });
 
     if (!existingTask) {
-      return NextResponse.json({ error: 'Task not found or unauthorized' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Task not found or unauthorized' },
+        { status: 404 }
+      );
     }
 
     const updatedTask = await prisma.task.update({
-      where: { id: params.id },
+      where: { id: context.params.id },
       data: { title, description, status, categoryId },
     });
 
@@ -54,7 +55,10 @@ export async function PUT(req: NextRequest, { params }: Context) {
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: Context) {
+export async function DELETE(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
     if (!token) {
@@ -65,14 +69,17 @@ export async function DELETE(req: NextRequest, { params }: Context) {
     const userId = decoded.userId;
 
     const existingTask = await prisma.task.findFirst({
-      where: { id: params.id, userId },
+      where: { id: context.params.id, userId },
     });
 
     if (!existingTask) {
-      return NextResponse.json({ error: 'Task not found or unauthorized' }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Task not found or unauthorized' },
+        { status: 404 }
+      );
     }
 
-    await prisma.task.delete({ where: { id: params.id } });
+    await prisma.task.delete({ where: { id: context.params.id } });
 
     return NextResponse.json({ message: 'Task deleted successfully' });
   } catch (err) {

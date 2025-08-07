@@ -2,7 +2,6 @@ import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/utils/generateToken';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client'; 
 
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -26,13 +25,12 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get('category');
     const status = searchParams.get('status');
 
-    // ✅ Build Prisma where filter
-    const where: Prisma.TaskWhereInput = {
+    
+    const where = {
       userId,
       ...(category ? { category: { name: category } } : {}),
       ...(status ? { status } : {}),
     };
-
     const tasks = await prisma.task.findMany({
       where,
       include: { category: true },
