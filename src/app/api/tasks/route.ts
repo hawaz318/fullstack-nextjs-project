@@ -2,9 +2,8 @@ import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/utils/generateToken';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { Prisma } from '@prisma/client'; // ✅ Add Prisma import
+import { Prisma } from '@prisma/client'; 
 
-// Validation schema for tasks
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
@@ -12,7 +11,7 @@ const taskSchema = z.object({
   categoryId: z.string().optional(),
 });
 
-// GET handler: Fetch tasks
+
 export async function GET(req: NextRequest) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
@@ -46,7 +45,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST handler: Create a new task
+
 export async function POST(req: NextRequest) {
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];

@@ -3,6 +3,7 @@ import { verifyToken } from '@/utils/generateToken';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+
 const taskSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
@@ -10,17 +11,20 @@ const taskSchema = z.object({
   categoryId: z.string().optional(),
 });
 
-export async function PUT(request: Request, context: { params: { id: string } }) {
-  const id = context.params.id;
- 
+
+export async function PUT(
+ req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
   try {
-    const token = request.headers.get('authorization')?.split(' ')[1];
+    const token = req.headers.get('authorization')?.split(' ')[1];
     if (!token)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const decoded = verifyToken(token);
+    const body = await req.json();
 
-    const body = await request.json();
     const result = taskSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json(
@@ -32,17 +36,15 @@ export async function PUT(request: Request, context: { params: { id: string } })
     const existingTask = await prisma.task.findFirst({
       where: { id, userId: decoded.userId },
     });
+
     if (!existingTask) {
-      return NextResponse.json(
-        { error: 'Task not found or unauthorized' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Task not found or unauthorized' }, { status: 404 });
     }
 
     const { title, description, status, categoryId } = result.data;
 
     const updated = await prisma.task.update({
-      where: { id},
+      where: { id },
       data: { title, description, status, categoryId },
     });
 
@@ -53,11 +55,12 @@ export async function PUT(request: Request, context: { params: { id: string } })
   }
 }
 
+
 export async function DELETE(
   req: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: { id: string } }
 ) {
-  const { params } = context;
+  const { id } = params;
   try {
     const token = req.headers.get('authorization')?.split(' ')[1];
     if (!token)
@@ -66,18 +69,14 @@ export async function DELETE(
     const decoded = verifyToken(token);
 
     const existingTask = await prisma.task.findFirst({
-      where: { id: params.id, userId: decoded.userId },
+      where: { id, userId: decoded.userId },
     });
+
     if (!existingTask) {
-      return NextResponse.json(
-        { error: 'Task not found or unauthorized' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Task not found or unauthorized' }, { status: 404 });
     }
 
-    await prisma.task.delete({
-      where: { id: params.id },
-    });
+    await prisma.task.delete({ where: { id } });
 
     return NextResponse.json({ message: 'Task deleted' });
   } catch (err) {
