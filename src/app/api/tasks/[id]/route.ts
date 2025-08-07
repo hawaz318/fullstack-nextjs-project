@@ -10,27 +10,18 @@ const taskSchema = z.object({
   categoryId: z.string().optional(),
 });
 
-export async function PUT(
-  req: NextRequest,
-  context: { params: { [key: string]: string } }
-) {
-  const { params } = context;
+export async function PUT(  request: Request,
+  { params }: { params: { id: string } }) 
+   {
+ 
   try {
-    const token = req.headers.get('authorization')?.split(' ')[1];
+    const token = request.headers.get('authorization')?.split(' ')[1];
     if (!token)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    let decoded: { userId: string };
-    try {
-      decoded = verifyToken(token) as { userId: string };
-      if (!decoded?.userId) {
-        return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-      }
-    } catch (err) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+    const decoded = verifyToken(token);
 
-    const body = await req.json();
+    const body = await request.json();
     const result = taskSchema.safeParse(body);
     if (!result.success) {
       return NextResponse.json(
@@ -65,7 +56,7 @@ export async function PUT(
 
 export async function DELETE(
   req: NextRequest,
-  context: { params: { [key: string]: string } }
+  context: { params: { id: string } }
 ) {
   const { params } = context;
   try {
